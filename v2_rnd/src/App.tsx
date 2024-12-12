@@ -1,5 +1,6 @@
 import './App.css'
 import AudioRecorder from './components/AudioRecorder'
+import AutoScreenRecorder from './components/AutoScreenRecord'
 import ScreenRecorder from './components/ScreenRecord'
 import VideoRecorder from './components/VideoRecorder'
 
@@ -11,7 +12,8 @@ function App() {
       {/* <HiddenScreenRecord /> */}
       {/* <AudioRecorder/> */}
       {/* <VideoRecorder/> */}
-      <ScreenRecorder/>
+      {/* <ScreenRecorder/> */}
+      <AutoScreenRecorder />
     </>
   )
 }

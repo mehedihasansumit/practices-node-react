@@ -1,113 +1,56 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { SetStateAction, useRef, useState } from "react";
 
 const mimeType = "video/webm";
 
 const useScreenRecord = () => {
 
     const [recordingStatus, setRecordingStatus] = useState("inactive");
-    const [videoChunks, setVideoChunks] = useState([]);
-    const [videoBlob, setVideoBlob] = useState();
+    const [videoChunks, setVideoChunks] = useState<any[]>([]);
     const [permission, setPermission] = useState(false);
-    const [stream, setStream] = useState<unknown>(null);
-    const [recordedVideo, setRecordedVideo] = useState(null);
+    const [stream, setStream] = useState<any>(null);
+    const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
 
-    const mediaRecorder = useRef(null);
-    const liveVideoFeed = useRef({ srcObject: null });
+    const mediaRecorder = useRef<any>(null);
+    const liveVideoFeed = useRef<any>({ srcObject: null });
+    const videoBlob = useRef<any>(null);
 
-
-    const [autoRecordBlob, setAutoRecordBlob] = useState();
-    const [storeRecord, setStoreRecord] = useState(false);
-
-    // const { permission, setPermission, stream, recordedVideo, setRecordedVideo, liveVideoFeed, getCameraPermission } = useVideoRecord();
     console.log({ permission, videoChunks, stream, mediaRecorder, liveVideoFeed, recordedVideo });
-
-    useEffect(() => {
-        if (!storeRecord) return;
-
-        const videoBlob = new Blob(videoChunks, { type: mimeType });
-
-        const file = new File([videoBlob], "yourfilename.webm", { type: mimeType });
-        console.log({ file })
-        const form = new FormData();
-        form.append("avatar", file)
-        axios.post('http://localhost:3000/profile', form)
-        console.log("clicked...22")
-        
-        setStoreRecord(false);
-    }, [storeRecord])
 
     const getCameraPermission = async () => {
         setRecordedVideo(null);
         if ("MediaRecorder" in window) {
             try {
-                const audioConstraints = { audio: true };
-                const videoConstraints = {
-                    audio: false,
-                };
                 const displayMediaOptions = {
                     video: {
                         displaySurface: "monitor"
                     },
-                    audio: true,
-                    // displaySurface: "monitor"
-                    // audio: {
-                    //     suppressLocalAudioPlayback: false,
-                    // },
-                    // preferCurrentTab: false,
-                    // selfBrowserSurface: "exclude",
-                    // systemAudio: "include",
-                    // surfaceSwitching: "include",
-                    // monitorTypeSurfaces: "include",
+                    audio: {
+                        suppressLocalAudioPlayback: false,
+                    },
+                    preferCurrentTab: false,
+                    selfBrowserSurface: "exclude",
+                    systemAudio: "include",
+                    surfaceSwitching: "include",
+                    monitorTypeSurfaces: "include",
                 };
-                // create audio and video streams separately
-                const audioStream = await navigator.mediaDevices.getUserMedia(
-                    audioConstraints
+                // create record stream
+                const displaySteam = await navigator.mediaDevices.getDisplayMedia(
+                    // @ts-ignore
+                    displayMediaOptions
                 );
-                // const videoStream = await navigator.mediaDevices.getUserMedia(
-                //     videoConstraints
-                // );
-                const videoStream = await navigator.mediaDevices.getDisplayMedia(
-                    {
-                        video: {
-                            displaySurface: "monitor"
-                        }
-                    }
-                );
-                videoStream.onactive = () => {
-                    console.log("active");
-                    // setPermission(false);
-                }
-                videoStream.oninactive = (res) => {
-                    console.log("inactive", res);
-                    setStoreRecord(true);
-                    setPermission(false);
-                }
-                console.log({ videoStream })
+
                 setPermission(true);
                 //combine both audio and video streams
                 const combinedStream = new MediaStream([
-                    ...videoStream.getVideoTracks(),
-                    ...audioStream.getAudioTracks(),
+                    ...displaySteam.getVideoTracks(),
                 ]);
                 setStream(combinedStream);
                 //set videostream to live feed player
-                liveVideoFeed.current.srcObject = videoStream;
+                liveVideoFeed.current.srcObject = displaySteam;
 
-
-
-                // auto record 
-                const media = new MediaRecorder(combinedStream, { mimeType });
-                mediaRecorder.current = media;
-                mediaRecorder.current.start();
-                let localVideoChunks = [];
-                mediaRecorder.current.ondataavailable = (event) => {
-                    if (typeof event.data === "undefined") return;
-                    if (event.data.size === 0) return;
-                    localVideoChunks.push(event.data);
-                };
-                setVideoChunks(localVideoChunks);
             } catch (err) {
+                // @ts-ignore
                 alert(err.message);
             }
         } else {
@@ -125,12 +68,13 @@ const useScreenRecord = () => {
         const media = new MediaRecorder(stream, { mimeType });
         mediaRecorder.current = media;
         mediaRecorder.current.start();
-        let localVideoChunks = [];
-        mediaRecorder.current.ondataavailable = (event) => {
+        let localVideoChunks: SetStateAction<any[]> = [];
+        mediaRecorder.current.ondataavailable = (event: any) => {
             if (typeof event.data === "undefined") return;
             if (event.data.size === 0) return;
             localVideoChunks.push(event.data);
         };
+        console.log({localVideoChunks})
         setVideoChunks(localVideoChunks);
     };
 
@@ -138,19 +82,26 @@ const useScreenRecord = () => {
         setPermission(false);
         setRecordingStatus("inactive");
         mediaRecorder.current.stop();
-        console.log({ videoChunks })
         mediaRecorder.current.onstop = () => {
-            const videoBlob = new Blob(videoChunks, { type: mimeType });
-            const videoUrl = URL.createObjectURL(videoBlob);
-            setVideoBlob(videoBlob);
+            const videoBlob_ = new Blob(videoChunks, { type: mimeType });
+            console.log({videoBlob})
+            const videoUrl = URL.createObjectURL(videoBlob_);
+            videoBlob.current = videoBlob_;
             setRecordedVideo(videoUrl);
             setVideoChunks([]);
-            console.log({ cb })
             if (cb) cb();
         };
     };
 
-    return { permission, videoBlob, stream, mediaRecorder, recordingStatus, liveVideoFeed, recordedVideo, getCameraPermission, stopCameraPermission, startRecording, stopRecording }
+    const onSendServer = () => {
+        const file = new File([videoBlob.current], "test.webm", { type: mimeType });
+        const form = new FormData();
+        form.append("avatar", file)
+        axios.post('http://localhost:3000/profile', form)
+        console.log("clicked...")
+    }
+
+    return { permission, videoBlob, mediaRecorder, recordingStatus, liveVideoFeed, recordedVideo, getCameraPermission, stopCameraPermission, startRecording, stopRecording, onSendServer }
 
 
 }

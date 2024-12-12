@@ -1,36 +1,18 @@
-import axios from "axios"
-
 import useScreenRecord from "../hooks/useScreenRecord";
-
-const mimeType = "video/webm";
 
 const ScreenRecorder = () => {
 
     const {
         permission,
-        stream,
-        videoBlob,
-        mediaRecorder,
         recordingStatus,
         liveVideoFeed,
         recordedVideo,
         getCameraPermission,
         stopCameraPermission,
         startRecording,
-        stopRecording
+        stopRecording,
+        onSendServer
     } = useScreenRecord();
-
-
-    const onSendServer = () => {
-        // const blob = new Blob(recordedVideo, { type: mimeType });
-        console.log({ videoBlob })
-        const file = new File([videoBlob], "yourfilename.webm", { type: mimeType });
-        console.log({ file })
-        const form = new FormData();
-        form.append("avatar", file)
-        axios.post('http://localhost:3000/profile', form)
-        console.log("clicked...")
-    }
 
     return (
         <div>
@@ -50,7 +32,7 @@ const ScreenRecorder = () => {
                         </button>
                     ) : null}
                     {recordingStatus === "recording" ? (
-                        <button onClick={()=>stopRecording()} type="button">
+                        <button onClick={() => stopRecording()} type="button">
                             Stop Recording
                         </button>
                     ) : null}
@@ -67,6 +49,7 @@ const ScreenRecorder = () => {
                     }
                 </div>
                 <div style={{ display: "flex", gap: "5px", margin: "auto" }}>
+                    {/* @ts-ignore */}
                     <a download href={recordedVideo} >
                         <button>
                             Download Recording
