@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "vite start",
     "dev": "vite --port=5173 --host=0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

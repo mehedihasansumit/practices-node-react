@@ -4,6 +4,25 @@ import { useRef, useState } from "react";
 import noOfScreens from '../lib/noOfScreens';
 const mimeType = "video/webm";
 
+const screenShareType = (displaySurface: any) => {
+    switch (displaySurface) {
+        case "monitor":
+            console.log("Full screen is being shared.");
+            break;
+        case "window":
+            console.log("A specific application window is being shared.");
+            break;
+        case "application":
+            console.log("An entire application is being shared.");
+            break;
+        case "browser":
+            console.log("A browser tab is being shared.");
+            break;
+        default:
+            console.log("Unknown screen sharing type.");
+    }
+}
+
 async function browserCheck() {
     console.log({ userAgent: navigator.userAgent })
     if ((navigator.userAgent.indexOf("Opera") || navigator.userAgent.indexOf('OPR')) != -1) return 'opera';
@@ -31,8 +50,8 @@ const useAutoScreenRecord = () => {
     const getCameraPermission = async () => {
         if ("MediaRecorder" in window) {
             try {
-                console.log({screen_details : await noOfScreens()})
-                console.log({ findOutBrowser : await browserCheck() })
+                console.log({ screen_details: await noOfScreens() })
+                console.log({ findOutBrowser: await browserCheck() })
 
                 const audioConstraints = {
                     audio: true
@@ -77,7 +96,15 @@ const useAutoScreenRecord = () => {
                     // stop recording and send throw api
                     stopRecording(onSendServer);
                 };
+
+                // Get video track from the screen stream
                 const videoTrack = displaySteam.getVideoTracks()[0];
+                console.log({videoTrack, displaySteam})
+                // Get settings of the video track
+                const settings = videoTrack.getSettings();
+                console.log({ settings })
+                // Detect the type of screen being shared
+                screenShareType(settings.displaySurface)
 
                 //  working with chrome, brave, mozila firefox, 
                 videoTrack.onended = () => {
